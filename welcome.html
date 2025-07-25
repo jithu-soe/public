@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to Smart Form Assistant</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.2);
+      overflow: hidden;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+      color: white;
+      text-align: center;
+      padding: 60px 40px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255, 255, 255, 0.05) 10px,
+        rgba(255, 255, 255, 0.05) 20px
+      );
+      animation: movePattern 20s linear infinite;
+    }
+
+    @keyframes movePattern {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero h1 {
+      font-size: 48px;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+
+    .hero p {
+      font-size: 20px;
+      opacity: 0.9;
+      margin-bottom: 30px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .version {
+      background: rgba(255, 255, 255, 0.2);
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .content {
+      padding: 50px 40px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 30px;
+      margin-bottom: 50px;
+    }
+
+    .feature {
+      text-align: center;
+      padding: 30px 20px;
+      border-radius: 15px;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .feature:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .feature-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+      display: block;
+    }
+
+    .feature h3 {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: #2d3748;
+    }
+
+    .feature p {
+      color: #718096;
+      line-height: 1.6;
+    }
+
+    .getting-started {
+      background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+      border-radius: 15px;
+      padding: 40px;
+      margin-bottom: 40px;
+    }
+
+    .getting-started h2 {
+      color: #2b6cb0;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+
+    .step {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    }
+
+    .step-number {
+      background: #4CAF50;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      margin-bottom: 15px;
+    }
+
+    .step h4 {
+      color: #2d3748;
+      margin-bottom: 10px;
+    }
+
+    .step p {
+      color: #718096;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .actions {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 40px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 15px 30px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(76, 175, 80, 0.6);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: #4a5568;
+      border: 2px solid #e2e8f0;
+    }
+
+    .btn-secondary:hover {
+      background: #f7fafc;
+      border-color: #cbd5e0;
+    }
+
+    .privacy-note {
+      background: #fffaf0;
+      border: 1px solid #fed7aa;
+      border-radius: 10px;
+      padding: 20px;
+      margin-top: 30px;
+      text-align: center;
+    }
+
+    .privacy-note h3 {
+      color: #c05621;
+      margin-bottom: 10px;
+    }
+
+    .privacy-note p {
+      color: #744210;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        margin: 10px;
+        border-radius: 15px;
+      }
+
+      .hero {
+        padding: 40px 20px;
+      }
+
+      .hero h1 {
+        font-size: 36px;
+      }
+
+      .hero p {
+        font-size: 18px;
+      }
+
+      .content {
+        padding: 30px 20px;
+      }
+
+      .features {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+
+      .getting-started {
+        padding: 30px 20px;
+      }
+
+      .steps {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="hero">
+      <div class="hero-content">
+        <h1>🤖 Smart Form Assistant</h1>
+        <p>Welcome! Your AI-powered form assistant is now ready to make form filling effortless and intelligent.</p>
+        <div class="version">Version 1.0.0</div>
+      </div>
+    </div>
+
+    <div class="content">
+      <div class="features">
+        <div class="feature">
+          <span class="feature-icon">🧠</span>
+          <h3>Intelligent Learning</h3>
+          <p>Automatically learns from your input patterns and remembers your information for future use.</p>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">⚡</span>
+          <h3>Smart Auto-Fill</h3>
+          <p>Instantly recognizes form fields and fills them with your saved information across all websites.</p>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">🔒</span>
+          <h3>Privacy First</h3>
+          <p>All data is stored locally in your browser. No information is ever sent to external servers.</p>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">🎯</span>
+          <h3>Context Aware</h3>
+          <p>Understands different form types like job applications, registrations, and contact forms.</p>
+        </div>
+      </div>
+
+      <div class="getting-started">
+        <h2>🚀 Getting Started</h2>
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <h4>Set Up Your Profile</h4>
+            <p>Add your personal information to enable smart auto-filling across all forms.</p>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <h4>Visit Any Website</h4>
+            <p>Navigate to websites with forms. The extension will automatically detect and analyze them.</p>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <h4>Watch the Magic</h4>
+            <p>Forms will be automatically filled with your information, and the assistant learns your preferences.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="privacy-note">
+        <h3>🛡️ Your Privacy is Protected</h3>
+        <p>
+          Smart Form Assistant operates entirely within your browser. Your personal information never leaves your device, 
+          ensuring complete privacy and security. All data is encrypted and stored locally using browser storage APIs.
+        </p>
+      </div>
+
+      <div class="actions">
+        <a href="#" class="btn btn-primary" id="setupProfile">
+          ✏️ Set Up My Profile
+        </a>
+        <a href="#" class="btn btn-secondary" id="openExtension">
+          🎛️ Open Extension
+        </a>
+        <button class="btn btn-secondary" id="closeWelcome">
+          ✨ Start Using Extension
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="welcome.js"></script>
+</body>
+</html>
