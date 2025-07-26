@@ -1,4 +1,4 @@
-// Smart Form Assistant - Enhanced Popup Script with ML Features
+// Smart Form Assistant - Fixed Popup Script with Error Handling
 document.addEventListener('DOMContentLoaded', async () => {
   const elements = {
     // Basic stats
@@ -80,19 +80,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       currentTab = tab;
       
+      // Try to get stats from content script with better error handling
       if (tab) {
         try {
+          // Check if content script is ready
           const stats = await chrome.tabs.sendMessage(tab.id, { action: 'getStats' });
-          if (stats) {
+          if (stats && !stats.error) {
             elements.formsCount.textContent = stats.formsDetected || 0;
+          } else {
+            elements.formsCount.textContent = '0';
           }
-        } catch (e) {
-          console.warn("Could not get stats from content script");
+        } catch (error) {
+          console.log("Content script not ready or page doesn't support extension");
           elements.formsCount.textContent = 'N/A';
         }
       }
       
-      // Get storage data
+      // Get storage data (this should always work)
       const storage = await chrome.storage.local.get([
         'isEnabled', 
         'userProfile', 
@@ -101,7 +105,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         'settings'
       ]);
       
-      // Update basic UI
+      // Update basic UI with safe fallbacks
       elements.templatesCount.textContent = Object.keys(storage.formTemplates || {}).length;
       elements.profileCount.textContent = Object.keys(storage.userProfile || {}).length;
       
@@ -116,7 +120,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       
     } catch (error) {
       console.error('Error initializing popup:', error);
-      showError('Could not connect to the current page');
+      showError('Extension initialization error');
     }
   }
 
@@ -148,7 +152,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
       }
     } catch (error) {
-      console.error('Error updating ML stats:', error);
+      console.warn('Background script communication error:', error);
+      // Set default values if background script isn't responding
+      elements.sessionsCount.textContent = '0';
+      elements.interactionsCount.textContent = '0';
+      elements.formTypesCount.textContent = '0';
+      elements.fieldTypesLearned.textContent = '0';
+      elements.progressPercent.textContent = '0%';
+      elements.progressFill.style.width = '0%';
+      elements.accuracyScore.textContent = '0%';
     }
   }
 
@@ -186,13 +198,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       await chrome.storage.local.set({ isEnabled });
       
       if (currentTab) {
-        await chrome.tabs.sendMessage(currentTab.id, { 
-          action: 'toggleExtension', 
-          enabled: isEnabled 
-        });
+        try {
+          await chrome.tabs.sendMessage(currentTab.id, { 
+            action: 'toggleExtension', 
+            enabled: isEnabled 
+          });
+          showSuccess(isEnabled ? 'Extension enabled' : 'Extension disabled');
+        } catch (error) {
+          // Content script not available, but setting was saved
+          showSuccess(isEnabled ? 'Extension enabled (reload page for full effect)' : 'Extension disabled');
+        }
       }
-      
-      showSuccess(isEnabled ? 'Extension enabled' : 'Extension disabled');
       
     } catch (error) {
       console.error('Error toggling extension:', error);
@@ -238,18 +254,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         throw new Error('No active tab found');
       }
       
-      const response = await chrome.tabs.sendMessage(currentTab.id, { 
-        action: 'startManualLearning' 
-      });
-      
-      if (response && response.success) {
-        showSuccess(`Learning mode activated on ${response.formsFound} forms`);
-        elements.learningIndicator.classList.add('active');
+      // Check if current page is suitable for forms
+      const url = currentTab.url;
+      if (url.startsWith('chrome://') || url.startsWith('chrome-extension://')) {
+        showError('Cannot use learning mode on this page. Please visit a website with forms.');
+        return;
+      }
+
+      try {
+        const response = await chrome.tabs.sendMessage(currentTab.id, { 
+          action: 'startManualLearning' 
+        });
         
-        // Refresh stats after a delay
-        setTimeout(updateMLStats, 2000);
-      } else {
-        showError('No forms found on this page to learn from');
+        if (response && response.success) {
+          showSuccess(`Learning mode activated on ${response.formsFound} forms`);
+          elements.learningIndicator.classList.add('active');
+          
+          // Refresh stats after a delay
+          setTimeout(updateMLStats, 2000);
+        } else {
+          showError('No forms found on this page to learn from');
+        }
+      } catch (error) {
+        showError('Content script not loaded. Please refresh the page and try again.');
       }
       
     } catch (error) {
@@ -273,11 +300,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       const response = await chrome.runtime.sendMessage({ action: 'exportData' });
       
-      if (response.success) {
+      if (response && response.success) {
         downloadFile(response.data, `smart-form-assistant-backup-${getDateString()}.json`);
         showSuccess('Data exported successfully');
       } else {
-        showError(response.error || 'Export failed');
+        showError(response?.error || 'Export failed');
       }
       
     } catch (error) {
@@ -294,11 +321,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       const response = await chrome.runtime.sendMessage({ action: 'exportMLData' });
       
-      if (response.success) {
+      if (response && response.success) {
         downloadFile(response.data, `smart-form-assistant-ml-data-${getDateString()}.json`);
         showSuccess('ML training data exported successfully');
       } else {
-        showError(response.error || 'ML export failed');
+        showError(response?.error || 'ML export failed');
       }
       
     } catch (error) {
@@ -322,14 +349,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         data: text 
       });
       
-      if (response.success) {
+      if (response && response.success) {
         showSuccess('Data imported successfully');
         setTimeout(() => {
           initializePopup();
           updateMLStats();
         }, 1000);
       } else {
-        showError(response.error || 'Import failed');
+        showError(response?.error || 'Import failed');
       }
       
     } catch (error) {
@@ -359,7 +386,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       
       const response = await chrome.runtime.sendMessage({ action: 'clearAllData' });
       
-      if (response.success) {
+      if (response && response.success) {
         showSuccess('All data cleared successfully');
         
         // Reset all displays
@@ -376,7 +403,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         elements.learningIndicator.classList.remove('active');
         
       } else {
-        showError(response.error || 'Clear failed');
+        showError(response?.error || 'Clear failed');
       }
       
     } catch (error) {
@@ -407,25 +434,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function showLoading(show) {
-    elements.loading.style.display = show ? 'block' : 'none';
+    if (elements.loading) {
+      elements.loading.style.display = show ? 'block' : 'none';
+    }
   }
 
   function showSuccess(message) {
     hideMessages();
-    elements.successMessage.textContent = message;
-    elements.successMessage.style.display = 'block';
-    setTimeout(hideMessages, 3000);
+    if (elements.successMessage) {
+      elements.successMessage.textContent = message;
+      elements.successMessage.style.display = 'block';
+      setTimeout(hideMessages, 3000);
+    }
   }
 
   function showError(message) {
     hideMessages();
-    elements.errorMessage.textContent = message;
-    elements.errorMessage.style.display = 'block';
-    setTimeout(hideMessages, 5000);
+    if (elements.errorMessage) {
+      elements.errorMessage.textContent = message;
+      elements.errorMessage.style.display = 'block';
+      setTimeout(hideMessages, 5000);
+    }
   }
 
   function hideMessages() {
-    elements.successMessage.style.display = 'none';
-    elements.errorMessage.style.display = 'none';
+    if (elements.successMessage) elements.successMessage.style.display = 'none';
+    if (elements.errorMessage) elements.errorMessage.style.display = 'none';
   }
 });
